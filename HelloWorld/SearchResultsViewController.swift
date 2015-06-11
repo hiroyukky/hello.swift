@@ -11,15 +11,17 @@ import UIKit
 class SearchResultsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, APIControllerProtocol {
 
     @IBOutlet var appsTableView : UITableView!
-    var tableData = []
+//    var tableData = []
+    var albums = [Album]()
     let kCellIdentifier: String = "SearchResultCell"
     var imageCache = [String:UIImage]()
+    var api: APIController!
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let api = APIController()
-        api.delegate = self
-        api.searchItunesFor("gocco")
+        api = APIController(delegate: self)
+        UIApplication.sharedApplication().networkActivityIndicatorVisible = true
+        api.searchItunesFor("perfume")
     }
 
     override func didReceiveMemoryWarning() {
@@ -29,7 +31,7 @@ class SearchResultsViewController: UIViewController, UITableViewDataSource, UITa
 
 
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return tableData.count
+        return albums.count
     }
     
     // Row display. Implementers should *always* try to reuse cells by setting each cell's reuseIdentifier and querying for available reusable cells with dequeueReusableCellWithIdentifier:
@@ -41,6 +43,35 @@ class SearchResultsViewController: UIViewController, UITableViewDataSource, UITa
         if(cell == nil) {
             cell = UITableViewCell(style: UITableViewCellStyle.Subtitle, reuseIdentifier: kCellIdentifier)
         }
+        let album = albums[indexPath.row]
+        cell!.detailTextLabel?.text = album.price
+        cell!.textLabel?.text       = album.title
+        cell!.imageView?.image      = UIImage(named: "Blank52")
+
+        let thumbnailURLString      = album.thumbnailImageURL
+        let thumbnailURL            = NSURL(string: thumbnailURLString)
+        if let img = imageCache[thumbnailURLString]{
+            cell!.imageView?.image = img
+        }else{
+            let request: NSURLRequest = NSURLRequest(URL: thumbnailURL!)
+            let task = NSURLSession.sharedSession().dataTaskWithRequest(request, completionHandler: {(data, response, error) -> Void in
+                //NSURLConnection.sendAsynchronousRequest(request, queue: mainQueue, completionHandler: {(response, data , error) -> Void in
+                if (error == nil) {
+                    let image = UIImage(data: data!)
+                    self.imageCache[thumbnailURLString] = image
+                    dispatch_async(dispatch_get_main_queue(), {
+                        if let cellToUpdate = tableView.cellForRowAtIndexPath(indexPath){
+                            cellToUpdate.imageView?.image = image
+                        }
+                    })
+                }else{
+                    print("error \(error?.description)")
+                }
+            })
+            task?.resume()
+        }
+    
+/*
         if let rowData: NSDictionary = self.tableData[indexPath.row] as? NSDictionary,
             urlString      = rowData["artworkUrl60"] as? String,
             imgURL         = NSURL(string: urlString),
@@ -72,9 +103,11 @@ class SearchResultsViewController: UIViewController, UITableViewDataSource, UITa
                 }
                 
         }
+*/
         return cell!
     }
 
+    /*
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         if let rowData = self.tableData[indexPath.row] as? NSDictionary,
             trackName      = rowData["trackName"] as? String,
@@ -84,11 +117,13 @@ class SearchResultsViewController: UIViewController, UITableViewDataSource, UITa
                 self.presentViewController(alert, animated: true, completion: nil)
         }
     }
+*/
     
     func didReceiveAPIResults(results: NSArray) {
         dispatch_async(dispatch_get_main_queue(), {
-            self.tableData = results
+            self.albums = Album.albumsWithJSON(results)
             self.appsTableView!.reloadData()
+            UIApplication.sharedApplication().networkActivityIndicatorVisible = false
         })
     }
 }
