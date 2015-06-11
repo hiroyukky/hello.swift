@@ -55,7 +55,6 @@ class SearchResultsViewController: UIViewController, UITableViewDataSource, UITa
         }else{
             let request: NSURLRequest = NSURLRequest(URL: thumbnailURL!)
             let task = NSURLSession.sharedSession().dataTaskWithRequest(request, completionHandler: {(data, response, error) -> Void in
-                //NSURLConnection.sendAsynchronousRequest(request, queue: mainQueue, completionHandler: {(response, data , error) -> Void in
                 if (error == nil) {
                     let image = UIImage(data: data!)
                     self.imageCache[thumbnailURLString] = image
@@ -70,54 +69,8 @@ class SearchResultsViewController: UIViewController, UITableViewDataSource, UITa
             })
             task?.resume()
         }
-    
-/*
-        if let rowData: NSDictionary = self.tableData[indexPath.row] as? NSDictionary,
-            urlString      = rowData["artworkUrl60"] as? String,
-            imgURL         = NSURL(string: urlString),
-            formattedPrice = rowData["formattedPrice"] as? String,
-            //imgData        = NSData(contentsOfURL: imgURL),
-            trackName      = rowData["trackName"] as? String {
-                cell!.detailTextLabel?.text = formattedPrice
-                cell!.textLabel?.text       = trackName
-                cell!.imageView?.image      = UIImage(named: "Blank52")
-                if let img = imageCache[urlString] {
-                    cell!.imageView?.image = img
-                }else{
-                    let request: NSURLRequest = NSURLRequest(URL: imgURL)
-                    let task = NSURLSession.sharedSession().dataTaskWithRequest(request, completionHandler: {(data, response, error) -> Void in
-                        //NSURLConnection.sendAsynchronousRequest(request, queue: mainQueue, completionHandler: {(response, data , error) -> Void in
-                        if (error == nil) {
-                            let image = UIImage(data: data!)
-                            self.imageCache[urlString] = image
-                            dispatch_async(dispatch_get_main_queue(), {
-                                if let cellToUpdate = tableView.cellForRowAtIndexPath(indexPath){
-                                    cellToUpdate.imageView?.image = image
-                                }
-                            })
-                        }else{
-                            print("error \(error?.description)")
-                        }
-                    })
-                    task?.resume()
-                }
-                
-        }
-*/
         return cell!
     }
-
-    /*
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        if let rowData = self.tableData[indexPath.row] as? NSDictionary,
-            trackName      = rowData["trackName"] as? String,
-            formattedPrice = rowData["formattedPrice"] as? String {
-                let alert = UIAlertController(title: trackName, message: formattedPrice, preferredStyle: .Alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
-                self.presentViewController(alert, animated: true, completion: nil)
-        }
-    }
-*/
     
     func didReceiveAPIResults(results: NSArray) {
         dispatch_async(dispatch_get_main_queue(), {
@@ -125,6 +78,13 @@ class SearchResultsViewController: UIViewController, UITableViewDataSource, UITa
             self.appsTableView!.reloadData()
             UIApplication.sharedApplication().networkActivityIndicatorVisible = false
         })
+    }
+
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if let detailsViewController: DetailsViewController = segue.destinationViewController as? DetailsViewController{
+            let albumIndex = appsTableView!.indexPathForSelectedRow!.row
+            detailsViewController.album = self.albums[albumIndex]
+        }
     }
 }
 
