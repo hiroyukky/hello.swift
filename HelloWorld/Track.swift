@@ -20,11 +20,12 @@ struct Track {
     static func tracksWithJSON(results: NSArray) -> [Track]{
         var tracks = [Track]()
         for trackInfo in results {
+            //print("trackInfo : \(trackInfo.description)")
             if let kind = trackInfo["kind"] as? String {
                 if kind == "song" {
                     var trackPrice = trackInfo["trackPrice"] as? String
                     var trackTitle = trackInfo["trackName"] as? String
-                    var trackPreviewUrl = trackInfo["trackViewUrl"] as? String
+                    var trackPreviewUrl = trackInfo["previewUrl"] as? String
                     if(trackTitle == nil) {
                         trackTitle = "Unkown"
                     }

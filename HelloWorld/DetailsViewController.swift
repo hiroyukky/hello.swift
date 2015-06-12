@@ -7,7 +7,8 @@
 //
 
 import UIKit
-import MediaPlayer
+import AVKit
+import AVFoundation
 
 class DetailsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, APIControllerProtocol {
     var album: Album?
@@ -16,7 +17,6 @@ class DetailsViewController: UIViewController, UITableViewDataSource, UITableVie
     @IBOutlet weak var tracksTableView: UITableView!
     var tracks = [Track]()
     lazy var api : APIController = APIController(delegate: self)
-    var mediaPlayer: MPMoviePlayerController = MPMoviePlayerController()
 
     required init(coder aDecorder: NSCoder) {
         super.init(coder: aDecorder)
@@ -51,14 +51,16 @@ class DetailsViewController: UIViewController, UITableViewDataSource, UITableVie
     }
 
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        var track = tracks[indexPath.row]
-        mediaPlayer.stop()
-        mediaPlayer.contentURL = NSURL(string: track.previewUrl)
-        mediaPlayer.play()
-        if let cell = tableView.cellForRowAtIndexPath(indexPath) as? TrackCell {
-            cell.playIcon.text = "🚮"
-        }
+        let track  = tracks[indexPath.row]
+        let url    = NSURL(string: track.previewUrl)
+        let player = AVPlayer(URL: url!)
 
+        let playerController = AVPlayerViewController()
+        playerController.view.autoresizingMask = UIViewAutoresizing.FlexibleHeight // | UIViewAutoresizing.FlexibleWidth
+        playerController.player = player
+        self.navigationController?.pushViewController(playerController, animated: false)
+
+        player.play()
     }
 
     func didReceiveAPIResults(results: NSArray){
